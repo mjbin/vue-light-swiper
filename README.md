@@ -1,6 +1,8 @@
 # light-swiper
 
-> A Vue.js project
+一个超级简单的vue swiper。
+
+
 
 ## Build Setup
 
