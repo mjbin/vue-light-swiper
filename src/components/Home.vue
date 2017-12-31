@@ -3,7 +3,7 @@
     <div class="page">
       <p>demo1:</p>
       <article class="demo-1">
-        <LightSwiper class="swiper">
+        <LightSwiper class="swiper" :pagination='true'>
           <LightSwiperItem class="swiper-item swiper-item-1" v-for="i in 10" :key="i">pane-{{i}}</LightSwiperItem>
         </LightSwiper>
       </article>
@@ -44,10 +44,10 @@ export default {
   box-sizing: border-box;
   .swiper-item {
     height: 100px;
-    // border-right: @border;
-    &:first-of-type{
-      // border-left: @border;
-    }
+    line-height: 100px;
+    text-align: center;
+    background: #eee;
+    border: 1px solid #666;
   }
 }
 

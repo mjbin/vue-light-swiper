@@ -3,15 +3,30 @@
     <div class="light-swiper-content" ref='swiperContain' :style="currentStyle">
       <slot></slot>
     </div>
+    <div class="light-swiper-pagination" v-if="listLength && pagination">
+      <span class="dot" v-for="n in listLength" :key="n" :class="{active: current == n - 1}"></span>
+    </div>
   </div>
 </template>
-<script>
 
+<script>
 const TIME = '0.5';
 export default {
   name: 'LightSwiper',
   props: {
     width: String,
+    pagination: {
+      type: Boolean,
+      default: true,
+    },
+    loop: {
+      type: Boolean,
+      default: false,
+    },
+    auto: {
+      type: Boolean,
+      default: false,
+    },
   },
   components: {},
   data() {
@@ -34,6 +49,8 @@ export default {
 
       touchStartTime: 0,
       touchEndTime: 0,
+
+      listLength: 0,
     };
   },
   computed: {
@@ -60,6 +77,7 @@ export default {
     updateContain() {
       this.getlimitCurrent();
 
+      this.listLength = this.list.length;
       this.list[this.current].active = true;
       this.currentWidth = this.list[this.current].$el.offsetWidth;
       let containWidth = 0;
@@ -69,9 +87,9 @@ export default {
       this.containWidth = containWidth;
     },
     init() {
-      this.$refs.swiperContain.addEventListener('touchstart', this.handleTouchStart, false);
-      this.$refs.swiperContain.addEventListener('touchmove', this.handleTouchMove, false);
-      this.$refs.swiperContain.addEventListener('touchend', this.handleTouchEnd, false);
+      this.$refs.swiper.addEventListener('touchstart', this.handleTouchStart, false);
+      this.$refs.swiper.addEventListener('touchmove', this.handleTouchMove, false);
+      this.$refs.swiper.addEventListener('touchend', this.handleTouchEnd, false);
     },
     handleTouchStart(e) {
       const touch = e.changedTouches[0];
@@ -216,7 +234,8 @@ export default {
       if (this.containWidth - fixedSliderWidth <= this.swiperContainWidth && this.next) {
         this.lastPoint = this.current;
         this.isLast = true;
-        this.distance = this.containWidth - this.swiperContainWidth - this.lastTouchOffset;
+        // 修正2个像素偏移值
+        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset) + 2;
       }
     },
     sliderTo(sliderWidth) {
@@ -250,9 +269,9 @@ export default {
     },
   },
   beforeDestroy() {
-    this.$refs.swiperContain.removeEventListener('touchstart', this.handleTouchStart);
-    this.$refs.swiperContain.removeEventListener('touchmove', this.handleTouchMove);
-    this.$refs.swiperContain.removeEventListener('touchend', this.handleTouchEnd);
+    this.$refs.swiper.removeEventListener('touchstart', this.handleTouchStart);
+    this.$refs.swiper.removeEventListener('touchmove', this.handleTouchMove);
+    this.$refs.swiper.removeEventListener('touchend', this.handleTouchEnd);
   },
   watch: {
     current(val) {
@@ -273,11 +292,35 @@ export default {
 
 <style lang="less" scoped>
 .light-swiper {
-  background: #eee;
+  background: #fafafa;
   width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
   .light-swiper-content {
     white-space: nowrap;
+  }
+  .light-swiper-pagination {
+    text-align: center;
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    .dot {
+      width: 5px;
+      height: 5px;
+      border: 1px solid #999;
+      background: #eee;
+      border-radius: 50%;
+      margin-left: 5px;
+      display: inline-block;
+      &:first-of-type {
+        margin-left: 0;
+      }
+      &.active {
+        background: #22aeff;
+      }
+    }
   }
 }
 </style>
