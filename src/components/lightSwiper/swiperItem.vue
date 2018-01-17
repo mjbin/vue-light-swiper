@@ -32,8 +32,10 @@ export default {
 .swiper-item {
   background: #fff;
   max-width: 100%;
-  display: inline-block;
+  flex-shrink: 0;
   box-sizing: border-box;
-  vertical-align: top;
+  justify-content: center;
+  align-items: center;
+  position: relative;
 }
 </style>

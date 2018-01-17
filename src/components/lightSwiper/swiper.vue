@@ -4,7 +4,7 @@
       <slot></slot>
     </div>
     <div class="light-swiper-pagination" v-if="listLength && pagination">
-      <span class="dot" v-for="n in listLength" :key="n" :class="{active: current == n - 1}"></span>
+      <span class="dot" v-for="n in limitCurrent + 1" :key="n" :class="{active: current == n - 1}" @click='touchSliderTo(n - 1)'></span>
     </div>
   </div>
 </template>
@@ -46,11 +46,10 @@ export default {
       currentStyle: null,
       containWidth: 0,
       limitCurrent: 0,
-
       touchStartTime: 0,
       touchEndTime: 0,
-
       listLength: 0,
+      clickDot: false,
     };
   },
   computed: {
@@ -62,12 +61,15 @@ export default {
     },
   },
   methods: {
+    getSwiperItemWidth(item) {
+      return item.$el.clientWidth + 2;
+    },
     getlimitCurrent() {
       let lastPaneWidth = 0;
       let limit = 0;
       const newArray = [].concat(this.list);
       newArray.reverse().forEach((item) => {
-        lastPaneWidth += item.$el.offsetWidth;
+        lastPaneWidth += this.getSwiperItemWidth(item);
         if (lastPaneWidth <= this.swiperContainWidth) {
           limit += 1;
         }
@@ -76,13 +78,12 @@ export default {
     },
     updateContain() {
       this.getlimitCurrent();
-
       this.listLength = this.list.length;
       this.list[this.current].active = true;
-      this.currentWidth = this.list[this.current].$el.offsetWidth;
+      this.currentWidth = this.getSwiperItemWidth(this.list[this.current]);
       let containWidth = 0;
       this.list.forEach((item) => {
-        containWidth += item.$el.offsetWidth;
+        containWidth += this.getSwiperItemWidth(item);
       });
       this.containWidth = containWidth;
     },
@@ -138,7 +139,6 @@ export default {
     },
     sliderToPrev() {
       this.prev = true;
-
       this.commonSliderTo(-1, 0);
     },
     sliderToNext() {
@@ -153,7 +153,6 @@ export default {
         if (limitValue === 0 && this.current <= limitValue) {
           this.current = 0;
         }
-
         if (limitValue === this.limitCurrent && this.current >= limitValue) {
           this.current = limitValue;
         }
@@ -162,18 +161,17 @@ export default {
     calcDistance() {
       if (this.current >= 0 && this.current <= this.limitCurrent) {
         const i = this.next ? this.previous : this.current;
-        this.currentWidth = this.list[i].$el.offsetWidth;
+        this.currentWidth = this.getSwiperItemWidth(this.list[i]);
         this.distance = this.next ? this.currentWidth : -this.currentWidth;
         if (Math.abs(this.offsetX) > window.screen.width / 3) {
           const fixedNumber = this.next ? -1 : 1;
           this.current = this.checkIsAvalid(this.current += fixedNumber);
           const oldPoint = this.current;
           const sliderDistance = Math.abs(this.offsetX) * this.getDistanceValue(); // 阀值计算
-
           const getCurrentPoint = (distance, list, index) => {
-            let cw = list[0].$el.offsetWidth;
+            let cw = this.getSwiperItemWidth(list[0]);
             if (index >= 0 && index <= this.limitCurrent) {
-              cw = list[index].$el.offsetWidth;
+              cw = this.getSwiperItemWidth(list[index]);
               const num = this.next ? +1 : -1;
               if (Math.abs(distance) - cw > 0) {
                 this.previous = this.current;
@@ -186,18 +184,15 @@ export default {
             }
           };
           getCurrentPoint(sliderDistance, this.list, this.current);
-
           const firstPoint = Math.min(oldPoint, this.current);
           const lastPoint = Math.max(oldPoint, this.current);
           const arr = this.list.slice(firstPoint, lastPoint);
           let fixedSliderWidth = 0;
           arr.forEach((item) => {
-            fixedSliderWidth += item.$el.offsetWidth;
+            fixedSliderWidth += this.getSwiperItemWidth(item);
           });
-
           this.distance = this.next ? fixedSliderWidth : -fixedSliderWidth;
         }
-
         // 到达最后边缘位置修正滚动距离
         this.lastPaneDistance();
       }
@@ -206,15 +201,12 @@ export default {
       if (this.isLast && value >= 0 && value <= this.limitCurrent && this.next) {
         return this.lastPoint;
       }
-
       if (value < 0) {
         return 0;
       }
-
       if (value > this.limitCurrent) {
         return this.limitCurrent;
       }
-
       return value;
     },
     getDistanceValue() {
@@ -229,17 +221,19 @@ export default {
       const arr = this.list.slice(0, this.current);
       let fixedSliderWidth = 0;
       arr.forEach((item) => {
-        fixedSliderWidth += item.$el.offsetWidth;
+        fixedSliderWidth += this.getSwiperItemWidth(item);
       });
+      console.log(fixedSliderWidth);
       if (this.containWidth - fixedSliderWidth <= this.swiperContainWidth && this.next) {
         this.lastPoint = this.current;
         this.isLast = true;
-        // 修正2个像素偏移值
-        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset) + 2;
+        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset);
       }
     },
     sliderTo(sliderWidth) {
-      if (Math.abs(this.offsetX) >= 50) {
+      console.log(sliderWidth);
+      if (Math.abs(this.offsetX) >= 50 || this.clickDot) {
+        this.clickDot = false;
         if (this.next) {
           const sliderDistance = sliderWidth;
           this.lastTouchOffset += sliderDistance;
@@ -248,13 +242,11 @@ export default {
           const arr = this.list.slice(0, this.current);
           let fixedSliderWidth = 0;
           arr.forEach((item) => {
-            fixedSliderWidth += item.$el.offsetWidth;
+            fixedSliderWidth += this.getSwiperItemWidth(item);
           });
           this.lastTouchOffset = fixedSliderWidth;
         }
-
         let distance = 0;
-
         distance = this.lastTouchOffset;
         this.currentStyle = {
           transition: `all ${TIME}s`,
@@ -266,6 +258,29 @@ export default {
           transform: `translate3d(-${this.lastTouchOffset}px, 0, 0)`,
         };
       }
+    },
+    touchSliderTo(index) {
+      // 点击滑动
+      const firstPoint = Math.min(this.current, index);
+      const lastPoint = Math.max(this.current, index);
+      const arr = this.list.slice(firstPoint, lastPoint);
+      let fixedSliderWidth = 0;
+      arr.forEach((item) => {
+        fixedSliderWidth += this.getSwiperItemWidth(item);
+      });
+      this.next = this.current <= index;
+      this.current = index;
+      this.distance = this.next ? fixedSliderWidth : -fixedSliderWidth;
+      this.clickDot = true;
+      this.isLast = false;
+
+      if (this.containWidth - fixedSliderWidth <= this.swiperContainWidth && this.next) {
+        this.lastPoint = this.current;
+        this.isLast = true;
+        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset);
+      }
+
+      this.sliderTo(this.distance);
     },
   },
   beforeDestroy() {
@@ -291,6 +306,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@width: 6px;
+
 .light-swiper {
   background: #fafafa;
   width: 100%;
@@ -298,7 +315,9 @@ export default {
   overflow: hidden;
   position: relative;
   .light-swiper-content {
-    white-space: nowrap;
+    display: flex;
+    -webkit-display: flex;
+    position: relative;
   }
   .light-swiper-pagination {
     text-align: center;
@@ -307,18 +326,17 @@ export default {
     left: 0;
     right: 0;
     .dot {
-      width: 5px;
-      height: 5px;
-      border: 1px solid #999;
-      background: #eee;
+      width: @width;
+      height: @width;
+      background: #e6e6e6;
       border-radius: 50%;
-      margin-left: 5px;
+      margin-left: @width;
       display: inline-block;
       &:first-of-type {
         margin-left: 0;
       }
       &.active {
-        background: #22aeff;
+        background: #999;
       }
     }
   }
