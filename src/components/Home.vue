@@ -4,11 +4,8 @@
       <p>demo1:</p>
       <article class="demo-1">
         <LightSwiper class="swiper" :pagination='true'>
-          <LightSwiperItem class="swiper-item swiper-item-1" v-for="i in 10" :key="i">
+          <LightSwiperItem class="swiper-item swiper-item-1" :class="{last: i == 10 }" v-for="i in 10" :key="i">
             <span class="inner-item">
-              pane-{{i}}
-            </span>
-            <span class="inner-item" v-if="i == 10">
               pane-{{i}}
             </span>
           </LightSwiperItem>
@@ -63,8 +60,10 @@ export default {
 }
 
 .swiper-item-1 {
-  // width: 33.33333%;
-  width: 200px;
+  width: 33.33333%;
+  &.last {
+    width: 200px;
+  }
 }
 
 .swiper-item-2 {

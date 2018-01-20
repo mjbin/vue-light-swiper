@@ -223,15 +223,13 @@ export default {
       arr.forEach((item) => {
         fixedSliderWidth += this.getSwiperItemWidth(item);
       });
-      console.log(fixedSliderWidth);
       if (this.containWidth - fixedSliderWidth <= this.swiperContainWidth && this.next) {
         this.lastPoint = this.current;
         this.isLast = true;
-        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset);
+        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset) + 2;
       }
     },
     sliderTo(sliderWidth) {
-      console.log(sliderWidth);
       if (Math.abs(this.offsetX) >= 50 || this.clickDot) {
         this.clickDot = false;
         if (this.next) {
@@ -274,12 +272,7 @@ export default {
       this.clickDot = true;
       this.isLast = false;
 
-      if (this.containWidth - fixedSliderWidth <= this.swiperContainWidth && this.next) {
-        this.lastPoint = this.current;
-        this.isLast = true;
-        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset);
-      }
-
+      this.lastPaneDistance();
       this.sliderTo(this.distance);
     },
   },
