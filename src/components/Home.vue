@@ -55,7 +55,7 @@ export default {
     line-height: 100px;
     text-align: center;
     background: #f5f5f5;
-    border: 1px solid #666;
+    // border: 1px solid #666;
   }
 }
 

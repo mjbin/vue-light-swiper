@@ -62,7 +62,7 @@ export default {
   },
   methods: {
     getSwiperItemWidth(item) {
-      return item.$el.clientWidth + 2;
+      return item.$el.offsetWidth;
     },
     getlimitCurrent() {
       let lastPaneWidth = 0;
