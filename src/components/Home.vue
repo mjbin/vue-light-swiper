@@ -40,7 +40,7 @@ export default {
 @border: 1px solid #e3e3e3;
 
 .home{
-  // padding: 10px;
+  padding: 10px;
   .page {
     width: 100%;
     overflow: hidden;
@@ -55,7 +55,7 @@ export default {
     line-height: 100px;
     text-align: center;
     background: #f5f5f5;
-    // border: 1px solid #666;
+    border: 1px solid #666;
   }
 }
 
