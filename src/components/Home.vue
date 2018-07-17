@@ -13,7 +13,7 @@
       </article>
       <p>demo2:</p>
       <article class="demo-2">
-        <LightSwiper class="swiper">
+        <LightSwiper class="swiper" :loop="true">
           <LightSwiperItem class="swiper-item swiper-item-2" v-for="i in 5" :key="i">
             <span class="inner-item">
               pane-{{i}}
@@ -49,7 +49,6 @@ export default {
 
 .swiper {
   border: @border;
-  box-sizing: border-box;
   .swiper-item {
     height: 100px;
     line-height: 100px;

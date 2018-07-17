@@ -12,9 +12,11 @@
     "test": "npm run unit && npm run e2e",
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs",
     "lintfix": "eslint --ext .js,.vue src --fix",
+    "fixeol": "crlf2lf src -r",
     "build": "node build/build.js"
   },
   "dependencies": {
+    "crlf2lf": "^1.0.1",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1"
   },

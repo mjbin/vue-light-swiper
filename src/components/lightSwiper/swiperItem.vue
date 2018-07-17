@@ -1,7 +1,7 @@
 <template>
-  <div class="swiper-item" :class="{active: active}" :style="itemStyle">
-    <slot></slot>
-  </div>
+<div class="swiper-item" :class="{active: active}" :style="itemStyle" @click="sliderTo">
+  <slot></slot>
+</div>
 </template>
 <script>
 export default {
@@ -9,6 +9,7 @@ export default {
   data() {
     return {
       active: false,
+      index: null,
       itemStyle: {
         width: 'auto',
       },
@@ -17,7 +18,21 @@ export default {
   props: {
     width: String,
   },
-  methods: {},
+  methods: {
+    sliderTo() {
+      if (this.hasAction) {
+        const index = this.index >=
+          this.$parent.limitCurrent ? this.$parent.limitCurrent : this.index;
+        this.$parent.touchSliderTo(index);
+        this.$emit('clickAction');
+      }
+    },
+  },
+  computed: {
+    hasAction() {
+      return this.$listeners.clickAction;
+    },
+  },
   mounted() {
     const parentWidth = this.$parent.$options.propsData.width;
     this.itemStyle.width = this.width || parentWidth;
@@ -30,12 +45,12 @@ export default {
 
 <style lang="less" scoped>
 .swiper-item {
-  background: #fff;
-  max-width: 100%;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  justify-content: center;
-  align-items: center;
-  position: relative;
+    background: #fff;
+    max-width: 100%;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
+    position: relative;
 }
 </style>
