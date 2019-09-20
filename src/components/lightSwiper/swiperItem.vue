@@ -1,7 +1,9 @@
 <template>
-<div class="swiper-item" :class="{active: active}" :style="itemStyle" @click="sliderTo">
-  <slot></slot>
-</div>
+  <div class="swiper-item" :class="{active: active}" :style="itemStyle" @click="sliderTo">
+    <span class="swiper-item-box" :style="boxStyle">
+      <slot></slot>
+    </span>
+  </div>
 </template>
 <script>
 export default {
@@ -17,12 +19,13 @@ export default {
   },
   props: {
     width: String,
+    clickAction: Boolean,
   },
   methods: {
     sliderTo() {
       if (this.hasAction) {
-        const index = this.index >=
-          this.$parent.limitCurrent ? this.$parent.limitCurrent : this.index;
+        const index = this.index
+          >= this.$parent.limitCurrent ? this.$parent.limitCurrent : this.index;
         this.$parent.touchSliderTo(index);
         this.$emit('clickAction');
       }
@@ -30,7 +33,13 @@ export default {
   },
   computed: {
     hasAction() {
-      return this.$listeners.clickAction;
+      return this.$listeners.clickAction || this.clickAction;
+    },
+    boxStyle() {
+      const { zoomRate, dragX, dragY } = this.$parent;
+      return {
+        transform: `translate(${dragX}px, ${dragY}px) scale(${zoomRate})`,
+      };
     },
   },
   mounted() {
@@ -38,19 +47,23 @@ export default {
     this.itemStyle.width = this.width || parentWidth;
   },
   updated() {
-    this.$parent.updateContain();
+    this.$nextTick(() => {
+      this.$parent.updateContain();
+    });
   },
 };
 </script>
 
 <style lang="less" scoped>
 .swiper-item {
-    background: #fff;
-    max-width: 100%;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    justify-content: center;
-    align-items: center;
+  background: transparent;
+  flex-shrink: 0;
+  justify-content: center;
+  display: flex;
+  overflow: hidden;
+  .swiper-item-box {
     position: relative;
+    width: 100%;
+  }
 }
 </style>

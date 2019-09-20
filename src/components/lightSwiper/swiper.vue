@@ -1,9 +1,9 @@
 <template>
-  <div class="light-swiper" ref="swiper">
-    <div class="light-swiper-content" ref='swiperContain' :style="currentStyle">
+  <div class="mall-swiper" ref="swiper">
+    <div class="mall-swiper-content" ref='swiperContain' :style="currentStyle">
       <slot></slot>
     </div>
-    <div class="light-swiper-pagination" v-if="listLength && pagination">
+    <div class="mall-swiper-pagination" v-if="listLength && pagination">
       <span class="dot" v-for="n in limitCurrent + 1" :key="n" :class="{active: current == n - 1}" @click='touchSliderTo(n - 1)'></span>
     </div>
   </div>
@@ -12,7 +12,7 @@
 <script>
 const TIME = '0.3';
 export default {
-  name: 'LightSwiper',
+  name: 'Swiper',
   props: {
     width: String,
     pagination: {
@@ -24,6 +24,10 @@ export default {
       default: false,
     },
     auto: {
+      type: [Number, String],
+      default: 3000,
+    },
+    zoom: {
       type: Boolean,
       default: false,
     },
@@ -58,6 +62,15 @@ export default {
       horizontalMove: false,
       isLoop: false, // 是否循环
       isAuto: false, // 是否自动滚动
+      interval: null, // 定时器
+      multiStartPos: null, // 保存的触摸点
+      zoomMode: false, // 是否处于缩放模式
+      zoomRate: 1, // 缩放倍率
+      dragStart: null, // 缩放模式开始拖动的点
+      dragX: 0, // 缩放模式的拖动距离
+      dragY: 0, // 缩放模式的拖动距离
+      localDragX: 0, // 上次状态缓存
+      localDragY: 0, // 上次状态缓存
     };
   },
   computed: {
@@ -87,14 +100,10 @@ export default {
     },
     updateContain() {
       if (this.list.length > 0) {
-        this.initLoop(); // 初始化循环设定值
-        this.initAuto(); // 初始化自动滚动值
-        if (this.isLoop) {
-          this.clearCopies();
-          this.addCopies();
-        }
+        this.configLoopAndAuto();
         this.getlimitCurrent();
         this.listLength = this.list.length;
+        this.current = this.current > this.limitCurrent ? this.limitCurrent : this.current;
         this.list[this.current].active = true;
         this.currentWidth = this.getSwiperItemWidth(this.list[this.current]);
         let containWidth = 0;
@@ -105,10 +114,17 @@ export default {
         this.containWidth = containWidth;
       }
     },
+    configLoopAndAuto() {
+      if (this.list.length > 1) {
+        this.initLoop(); // 初始化循环设定值
+        this.initAuto(); // 初始化自动滚动值
+        if (this.isLoop) {
+          this.clearCopies();
+          this.addCopies();
+        }
+      }
+    },
     init() {
-      this.$nextTick(() => {
-        this.autoSlider();
-      });
       this.$refs.swiper.addEventListener('touchstart', this.handleTouchStart, false);
       this.$refs.swiper.addEventListener('touchmove', this.handleTouchMove, false);
       this.$refs.swiper.addEventListener('touchend', this.handleTouchEnd, false);
@@ -124,22 +140,89 @@ export default {
     autoSlider() {
       if (this.isAuto) {
         this.interval = setInterval(() => {
-          const index = this.current >= this.limitCurrent ? 0 : this.current + 1;
+          const index = this.current > this.limitCurrent ? 0 : this.current + 1;
+          this.lastNextSliderByLoop(); // 处理轮播结束后的位置重置
           this.touchSliderTo(index);
-        }, 3000);
+        }, this.auto);
       }
     },
+    getMultiTouchPos(e) {
+      return e.touches;
+    },
     handleTouchStart(e) {
+      this.zoomMode = this.zoom && e.touches.length > 1; // 多点 放大模式
+
+      // 进入缩放模式下
+      if (this.zoomMode) {
+        e.stopPropagation();
+        e.preventDefault();
+        this.multiStartPos = this.getMultiTouchPos(e);
+        return;
+      }
+
       const touch = e.changedTouches[0];
+
+      // 在缩放模式下拖动
+      if (this.zoomRate > 1) {
+        e.stopPropagation();
+        e.preventDefault();
+        this.dragStart = touch;
+        return;
+      }
+      // 正常模式拖动
       this.startX = touch.pageX;
       this.startY = touch.clientY;
       this.isTouch = true;
       this.firstMove = true;
-      clearInterval(this.interval);
       this.touchStartTime = Date.now();
+      clearInterval(this.interval);
+      this.updateContain(); // fix ios无法渲染后无法获取正常的宽度
     },
     handleTouchMove(e) {
+      // 处于缩放模式下
+      if (this.zoomMode) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        const touch00 = this.multiStartPos[0];
+        const touch01 = this.multiStartPos[1];
+
+        const x20 = (touch00.pageX - touch01.pageX) ** 2;
+        const y20 = (touch00.pageY - touch01.pageY) ** 2;
+
+        const touchs = e.touches;
+        const touch10 = touchs[0];
+        const touch11 = touchs[1];
+
+        const x21 = (touch10.pageX - touch11.pageX) ** 2;
+        const y21 = (touch10.pageY - touch11.pageY) ** 2;
+        this.zoomRate = (x21 + y21) / (x20 + y20);
+        if (this.zoomRate > 3) this.zoomRate = 3;
+        if (this.zoomRate <= 1) {
+          this.zoomRate = 1;
+          this.dragX = 0;
+          this.dragY = 0;
+          this.localDragX = 0;
+          this.localDragY = 0;
+        }
+        return;
+      }
+
       const touch = e.changedTouches[0];
+
+      // 在缩放模式下拖动
+      if (this.zoomRate > 1) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        const dragX = +touch.pageX - this.dragStart.pageX;
+        const dragY = +touch.pageY - this.dragStart.pageY;
+        this.dragX = this.localDragX + dragX;
+        this.dragY = this.localDragY + dragY;
+        return;
+      }
+
+      // 非缩放模式的正常拖动
       this.offsetX = this.startX - touch.pageX;
       this.offsetY = this.startY - touch.clientY;
       // 判断用户是横向滑动还是纵向滑动，以此来避免误滑
@@ -162,7 +245,30 @@ export default {
       }
     },
     handleTouchEnd() {
+      // 非缩放模式下的拖动
+      if (this.zoomRate > 1) {
+        this.localDragX = this.dragX;
+        this.localDragY = this.dragY;
+        return;
+      }
+
+      // 若无缩放，则设置为非缩放模式
+      if (this.zoomRate === 1) {
+        this.localDragX = 0;
+        this.localDragY = 0;
+        this.zoomMode = false;
+      }
+
+      // 正常模式的拖动
       if (!this.horizontalMove) return;
+      // 处理子滑块总长不够容器长的特殊情况
+      if (this.containWidth <= this.swiperContainWidth) {
+        this.currentStyle = {
+          transition: `all ${TIME}s`,
+          transform: 'translate3d(0, 0, 0)',
+        };
+        return;
+      }
 
       if (this.offsetX <= -50) {
         this.sliderToPrev();
@@ -206,7 +312,8 @@ export default {
       }
     },
     emitSwiperHandle() {
-      if (this.next && this.isLast && !this.isLoop) {
+      const isLast = this.current === this.limitCurrent;
+      if (this.next && isLast && !this.isLoop) {
         this.$emit('swiperLast');
       }
     },
@@ -326,7 +433,7 @@ export default {
       if (this.containWidth - fixedSliderWidth <= this.swiperContainWidth && this.next) {
         this.lastPoint = this.current;
         this.isLast = true;
-        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset) + 2;
+        this.distance = (this.containWidth - this.swiperContainWidth - this.lastTouchOffset);
       }
       if (this.isLoop) {
         this.distance = this.swiperContainWidth;
@@ -439,10 +546,27 @@ export default {
         this.list[val].active = true;
       }
     },
+    listLength() {
+      // 数据修改时，重置样式值
+      this.resetStyle();
+      this.current = 0;
+      this.lastTouchOffset = 0;
+      this.currentStyle = {
+        transition: `all ${TIME}s`,
+        transform: 'translate3d(0, 0, 0)',
+      };
+    },
+    isAuto(value) {
+      if (value) {
+        this.autoSlider();
+      }
+    },
   },
   mounted() {
     this.init();
-    this.updateContain();
+    this.$nextTick(() => {
+      this.updateContain();
+    });
   },
 };
 </script>
@@ -450,23 +574,24 @@ export default {
 <style lang="less" scoped>
 @width: 6px;
 
-.light-swiper {
+.mall-swiper {
   background: #fafafa;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
-  .light-swiper-content {
+  .mall-swiper-content {
     display: flex;
     -webkit-display: flex;
     position: relative;
   }
-  .light-swiper-pagination {
+  .mall-swiper-pagination {
     text-align: center;
     position: absolute;
     bottom: 5px;
     left: 0;
     right: 0;
+    z-index: 999;
     .dot {
       width: @width;
       height: @width;

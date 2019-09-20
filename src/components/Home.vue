@@ -11,7 +11,7 @@
           </LightSwiperItem>
         </LightSwiper>
       </article>
-      <p>demo2:</p>
+      <p>demo2: 循环模式</p>
       <article class="demo-2">
         <LightSwiper class="swiper" :loop="true">
           <LightSwiperItem class="swiper-item swiper-item-2" v-for="i in 5" :key="i">
@@ -21,6 +21,18 @@
           </LightSwiperItem>
         </LightSwiper>
       </article>
+      <span class="tip">请先设置loop=true, 必须在宽屏模式下使用</span>
+      <p>demo3: 支持缩放</p>
+      <article class="demo-3">
+        <LightSwiper class="swiper" :loop="true" :zoom="true">
+          <LightSwiperItem class="swiper-item swiper-item-2" v-for="i in 5" :key="i">
+            <span class="inner-item">
+              pane-{{i}}
+            </span>
+          </LightSwiperItem>
+        </LightSwiper>
+      </article>
+      <span class="tip">请先设置zoom=true, 必须在宽屏模式下使用</span>
     </div>
   </div>
 </template>
@@ -44,6 +56,9 @@ export default {
   .page {
     width: 100%;
     overflow: hidden;
+    p {
+      font-weight: bold;
+    }
   }
 }
 
@@ -54,7 +69,9 @@ export default {
     line-height: 100px;
     text-align: center;
     background: #f5f5f5;
-    border: 1px solid #666;
+    &:nth-of-type(2n) {
+      background: #fff;
+    }
   }
 }
 
@@ -67,5 +84,15 @@ export default {
 
 .swiper-item-2 {
   width: 100%;
+}
+
+.demo-3 {
+  .swiper-item {
+    height: 200px;
+  }
+}
+
+.tip {
+  font-size: 13px;
 }
 </style>
