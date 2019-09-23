@@ -1,8 +1,8 @@
 <template>
   <div class="swiper-item" :class="{active: active}" :style="itemStyle" @click="sliderTo">
-    <span class="swiper-item-box" :style="boxStyle">
+    <div class="swiper-item-box" :style="boxStyle">
       <slot></slot>
-    </span>
+    </div>
   </div>
 </template>
 <script>

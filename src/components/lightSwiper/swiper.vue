@@ -66,6 +66,7 @@ export default {
       multiStartPos: null, // 保存的触摸点
       zoomMode: false, // 是否处于缩放模式
       zoomRate: 1, // 缩放倍率
+      lastZoomRate: 0, // 上次缩放状态缓存
       dragStart: null, // 缩放模式开始拖动的点
       dragX: 0, // 缩放模式的拖动距离
       dragY: 0, // 缩放模式的拖动距离
@@ -196,7 +197,9 @@ export default {
 
         const x21 = (touch10.pageX - touch11.pageX) ** 2;
         const y21 = (touch10.pageY - touch11.pageY) ** 2;
-        this.zoomRate = (x21 + y21) / (x20 + y20);
+        const rate = (x21 + y21) / (x20 + y20);
+
+        this.zoomRate = this.lastZoomRate + rate;
         if (this.zoomRate > 3) this.zoomRate = 3;
         if (this.zoomRate <= 1) {
           this.zoomRate = 1;
@@ -204,6 +207,7 @@ export default {
           this.dragY = 0;
           this.localDragX = 0;
           this.localDragY = 0;
+          this.lastZoomRate = 0;
         }
         return;
       }
@@ -249,6 +253,7 @@ export default {
       if (this.zoomRate > 1) {
         this.localDragX = this.dragX;
         this.localDragY = this.dragY;
+        this.lastZoomRate = this.zoomRate - 1; // 去掉原缩放值1
         return;
       }
 
@@ -257,6 +262,7 @@ export default {
         this.localDragX = 0;
         this.localDragY = 0;
         this.zoomMode = false;
+        this.lastZoomRate = 0;
       }
 
       // 正常模式的拖动
