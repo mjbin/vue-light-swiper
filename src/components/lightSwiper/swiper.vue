@@ -536,6 +536,44 @@ export default {
       this.$refs.swiperContain.style.width = '100%';
       this.$refs.swiperContain.style.marginLeft = `-${this.currentWidth}px`;
     },
+    sliderPrev() {
+      // 非循环模式下最后页禁止滚动
+      if (!this.isLoop && this.isFirst) return;
+
+      this.clickDot = true;
+      this.prev = true;
+      // 计算下pad的宽度
+      this.distance = this.swiperContainWidth;
+      this.isFirst = this.current === 0;
+      this.current -= 1;
+      if (this.current < 0) {
+        this.firstPrevSliderByLoop();
+      }
+      if (this.isFirst && this.prev) {
+        this.lastTouchOffset = 0;
+      } else {
+        this.calcDistance();
+        this.sliderTo(this.distance);
+      }
+      this.resetStyle();
+    },
+    sliderNext() {
+      // 非循环模式下最后页禁止滚动
+      if (!this.isLoop && this.isLast) return;
+
+      this.clickDot = true;
+      this.next = true;
+      // 计算下pad的宽度
+      this.distance = this.swiperContainWidth;
+      this.current += 1;
+      if (this.current >= this.list.length) {
+        this.lastNextSliderByLoop();
+      }
+
+      this.calcDistance();
+      this.sliderTo(this.distance);
+      this.resetStyle();
+    },
   },
   beforeDestroy() {
     clearInterval(this.interval);
